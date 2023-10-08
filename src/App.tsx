@@ -1,7 +1,7 @@
 import { createSignal, onMount } from 'solid-js'
 import solidLogo from './assets/solid.svg'
 import viteLogo from '/vite.svg'
-import init, { greet, connect } from 'matchboy';
+import init, { greet, connect } from 'matchlib';
 import './App.css'
 
 function App() {

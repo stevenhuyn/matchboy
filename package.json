@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "wasm": "wasm-pack build ./matchboy --target web",
+    "wasm": "wasm-pack build ./matchlib --target web",
+    "server": "cd matchbox_server && cargo run --release",
     "dev": "npm run wasm && vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
