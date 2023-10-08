@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "wasm": "wasm-pack build ./matchboy --target web",
-    "dev": "vite",
+    "dev": "npm run wasm && vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },

@@ -1,7 +1,7 @@
 import { createSignal, onMount } from 'solid-js'
 import solidLogo from './assets/solid.svg'
 import viteLogo from '/vite.svg'
-import init, { greet } from 'matchboy';
+import init, { greet, connect } from 'matchboy';
 import './App.css'
 
 function App() {
@@ -31,6 +31,9 @@ function App() {
           greet('world')
         }}>
           Click for thing
+        </button>
+        <button onClick={connect}>
+          Connect
         </button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
