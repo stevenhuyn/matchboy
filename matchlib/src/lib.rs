@@ -21,6 +21,13 @@ pub fn greet(name: &str) {
     alert(&format!("Hello,{}!", name));
 }
 
+#[wasm_bindgen(start)]
+pub fn init() {
+    // Setup logging
+    console_error_panic_hook::set_once();
+    console_log::init_with_level(log::Level::Debug).unwrap();
+}
+
 
 #[wasm_bindgen]
 pub async fn connect() {
