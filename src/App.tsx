@@ -1,10 +1,15 @@
-import { createSignal } from 'solid-js'
+import { createSignal, onMount } from 'solid-js'
 import solidLogo from './assets/solid.svg'
 import viteLogo from '/vite.svg'
+import init, { greet } from 'matchboy';
 import './App.css'
 
 function App() {
   const [count, setCount] = createSignal(0)
+
+  onMount(() => {
+    init();
+  })
 
   return (
     <>
@@ -20,6 +25,12 @@ function App() {
       <div class="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count()}
+        </button>
+
+        <button onClick={() => {
+          greet('world')
+        }}>
+          Click for thing
         </button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
