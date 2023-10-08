@@ -4,7 +4,8 @@ use async_trait::async_trait;
 use axum::{extract::ws::Message, Error};
 use matchbox_protocol::PeerId;
 use matchbox_signaling::{
-    NoCallbacks, SignalingServerBuilder, SignalingState, SignalingTopology, WsStateMeta,
+    common_logic::SignalingChannel, NoCallbacks, SignalingServerBuilder, SignalingState,
+    SignalingTopology, WsStateMeta,
 };
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::info;
@@ -29,8 +30,14 @@ fn setup_logging() {
 #[derive(Default, Debug, Clone)]
 struct ServerState {
     rooms: HashMap<Uuid, Room>,
+    next: Option<NextPeer>,
 }
 impl SignalingState for ServerState {}
+
+#[derive(Debug, Clone)]
+struct NextPeer {
+    room_id: Uuid,
+}
 
 #[derive(Debug, Clone)]
 struct Room {
@@ -40,7 +47,7 @@ struct Room {
 #[derive(Debug, Clone)]
 struct Peer {
     uuid: PeerId,
-    sender: UnboundedSender<Result<Message, Error>>
+    sender: SignalingChannel,
 }
 
 #[tokio::main]
@@ -52,7 +59,19 @@ async fn main() {
     let server_state = ServerState::default();
 
     let addr: SocketAddr = "0.0.0.0:3536".parse().unwrap();
-    let server = SignalingServerBuilder::new(addr, ChatRoomTopology, server_state);
+    let server = SignalingServerBuilder::new(addr, ChatRoomTopology, server_state)
+        .on_connection_request(move |connection| {
+            info!("Connection Request {connection:?}");
+            Ok(true)
+        })
+        .on_id_assignment(move |(origin, peer_id)| {
+            info!("Client connected {origin:?}: {peer_id:?}");
+        })
+        .cors()
+        .trace()
+        .build();
+
+        server.serve().await.expect("Unable to run signalling server");
 }
 
 struct ChatRoomTopology;
@@ -60,13 +79,19 @@ struct ChatRoomTopology;
 #[async_trait]
 impl SignalingTopology<NoCallbacks, ServerState> for ChatRoomTopology {
     async fn state_machine(upgrade: WsStateMeta<NoCallbacks, ServerState>) {
-        let WsStateMeta { peer_id, sender, mut receiver, mut state, .. } = upgrade;
+        let WsStateMeta {
+            peer_id,
+            sender,
+            mut receiver,
+            mut state,
+            ..
+        } = upgrade;
 
-        let connecting_peer = Peer { uuid: peer_id, sender };
+        let connecting_peer = Peer {
+            uuid: peer_id,
+            sender,
+        };
 
-        let room
-
-
-
+        // for peer in state.rooms
     }
 }
