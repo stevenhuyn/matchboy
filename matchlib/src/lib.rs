@@ -3,12 +3,12 @@ extern crate wasm_bindgen;
 
 mod utils;
 
-use std::{time::Duration, cell::RefCell};
+use std::{cell::RefCell, env, time::Duration};
 
 use futures::{select, FutureExt};
 use futures_timer::Delay;
 use log::info;
-use matchbox_socket::{WebRtcSocket, PeerState, PeerId};
+use matchbox_socket::{PeerId, PeerState, WebRtcSocket};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -28,9 +28,8 @@ pub fn init() {
     console_log::init_with_level(log::Level::Debug).unwrap();
 }
 
-
 pub enum Action {
-    Message(String)
+    Message(String),
 }
 
 thread_local! {
@@ -42,18 +41,18 @@ pub fn send_message(message: String) {
     STATE.with(|state| state.borrow_mut().push(Action::Message(message)));
 }
 
-
 #[wasm_bindgen]
 pub async fn connect() {
     info!("Connecting to matchbox");
-    let (mut socket, loop_fut) = WebRtcSocket::new_reliable("ws://localhost:3536/");
+    let url = env::var("SIGNAL_SERVER_URL").unwrap_or("ws://localhost:3536/".to_string());
+
+    let (mut socket, loop_fut) = WebRtcSocket::new_reliable(url);
 
     let loop_fut = loop_fut.fuse();
     futures::pin_mut!(loop_fut);
 
     let timeout = Delay::new(Duration::from_millis(100));
     futures::pin_mut!(timeout);
-
 
     loop {
         // Handle any new peers

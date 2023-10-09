@@ -1,11 +1,15 @@
 use std::{
     collections::HashMap,
+    env,
     net::SocketAddr,
     sync::{Arc, Mutex},
 };
 
 use async_trait::async_trait;
-use axum::{extract::ws::Message, Error};
+use axum::{
+    extract::ws::Message,
+    http::{header::CONTENT_TYPE, Method},
+};
 use futures::StreamExt;
 use matchbox_protocol::{JsonPeerEvent, PeerId, PeerRequest};
 use matchbox_signaling::{
@@ -13,7 +17,7 @@ use matchbox_signaling::{
     ClientRequestError, NoCallbacks, SignalingServerBuilder, SignalingState, SignalingTopology,
     WsStateMeta,
 };
-use tokio::sync::mpsc::UnboundedSender;
+use tower_http::cors::CorsLayer;
 use tracing::{error, info, warn};
 use tracing_subscriber::prelude::*;
 use uuid::Uuid;
@@ -73,7 +77,28 @@ async fn main() {
         .unwrap()
         .insert(uuid, Room { peers: Vec::new() });
 
-    let addr: SocketAddr = "0.0.0.0:3536".parse().unwrap();
+    let railway_env = env::var("RAILWAY_PROJECT_NAME");
+    tracing::debug!("railway_env: {:?}", railway_env);
+    let railway_env = railway_env.is_ok();
+    let origins = match railway_env {
+        false => ["https://localhost:5173".parse().unwrap()],
+        true => ["https://matchboy.onrender.com".parse().unwrap()],
+    };
+
+    let cors = CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers([CONTENT_TYPE]);
+
+    let host = match railway_env {
+        false => [127, 0, 0, 1],
+        true => [0, 0, 0, 0],
+    };
+
+    let port_string = env::var("PORT").unwrap_or_else(|_| String::from("3000"));
+    let port = port_string.parse::<u16>().unwrap_or(3000);
+    let addr = SocketAddr::from((host, port));
+
     let server = SignalingServerBuilder::new(addr, ChatRoomTopology, state)
         .on_connection_request(move |connection| {
             // info!("Connection Request {connection:?}");
@@ -85,9 +110,8 @@ async fn main() {
                 .lock()
                 .unwrap()
                 .replace(NextPeer { room_id: uuid });
-            // info!("Client connected {origin:?}: {peer_id:?}");
         })
-        .cors()
+        .mutate_router(|router| router.layer(cors.clone()))
         .trace()
         .build();
 
@@ -179,7 +203,6 @@ impl SignalingTopology<NoCallbacks, ServerState> for ChatRoomTopology {
 
                             let _ = peer.sender.send(Ok(event));
                         }
-
                     }
                 }
                 PeerRequest::KeepAlive => {
