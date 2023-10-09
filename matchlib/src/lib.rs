@@ -5,9 +5,9 @@ mod utils;
 
 use std::{cell::RefCell, env, time::Duration};
 
-use futures::{select, FutureExt};
+use futures::{future::ErrInto, select, FutureExt};
 use futures_timer::Delay;
-use log::info;
+use log::{error, info};
 use matchbox_socket::{PeerId, PeerState, WebRtcSocket};
 use wasm_bindgen::prelude::*;
 
@@ -24,8 +24,10 @@ pub fn greet(name: &str) {
 #[wasm_bindgen(start)]
 pub fn init() {
     // Setup logging
+    info!("HEYYYY");
+    error!("BRUH");
     console_error_panic_hook::set_once();
-    console_log::init_with_level(log::Level::Debug).unwrap();
+    console_log::init_with_level(log::Level::Info).unwrap();
 }
 
 pub enum Action {

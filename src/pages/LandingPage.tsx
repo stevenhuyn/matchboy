@@ -6,16 +6,10 @@ export const LandingPage = () => {
   const [history, setHistory] = createSignal<string[]>([]);
 
   onMount(async () => {
-    let res = await init();
-    console.log(res);
-    await connect();
-
-    setTimeout(() => {
-      console.log("Getting history");
-      let h = get_history();
-      console.log(h);
-      setHistory(h);
-    }, 1000);
+    init().then((res) => {
+      console.log("CONNECTED");
+      console.log(res);
+    });
   });
 
   const handleInput = (e: Event) => {
@@ -34,6 +28,18 @@ export const LandingPage = () => {
     // cleanup if needed, e.g. clear intervals, listeners, etc.
   });
 
+  const handleConnect = () => {
+    connect();
+
+    setTimeout(() => {
+      setInterval(() => {
+        console.log("Getting history");
+        let h = get_history();
+        console.log(h);
+        setHistory(h);
+      }, 10000);
+    }, 1000);
+  };
   return (
     <>
       <h1 class="font-light text-4xl m-6">Match Boy</h1>
@@ -46,6 +52,9 @@ export const LandingPage = () => {
         onInput={handleInput}
         onKeyDown={handleKeyDown}
       />
+      <button class="btn" onClick={handleConnect}>
+        Connect
+      </button>
       <div>
         {history().map((item) => (
           <div>{item}</div>
