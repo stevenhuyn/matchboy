@@ -33,12 +33,27 @@ pub enum Action {
 }
 
 thread_local! {
-    pub static STATE: RefCell<Vec<Action>> = RefCell::new(Vec::new());
+    pub static QUEUE: RefCell<Vec<Action>> = RefCell::new(Vec::new());
+    pub static HISTORY: RefCell<Vec<(String, String)>> = RefCell::new(Vec::new());
 }
 
 #[wasm_bindgen]
 pub fn send_message(message: String) {
-    STATE.with(|state| state.borrow_mut().push(Action::Message(message)));
+    info!("Sending message: {message}");
+    QUEUE.with(|state| state.borrow_mut().push(Action::Message(message)));
+}
+
+#[wasm_bindgen]
+pub fn get_history() -> JsValue {
+    HISTORY.with(|state| {
+        let history = state.borrow();
+        let collected: Vec<(String, String)> = history
+            .iter()
+            .map(|(peer, message)| (peer.to_string(), message.to_string()))
+            .collect();
+
+        serde_wasm_bindgen::to_value(&collected).unwrap()
+    })
 }
 
 #[wasm_bindgen]
@@ -77,11 +92,17 @@ pub async fn connect() {
 
         // Handle any messages to send
         // TODO: Move into the select
-        while let Some(action) = STATE.with(|state| state.borrow_mut().pop()) {
+        while let Some(action) = QUEUE.with(|state| state.borrow_mut().pop()) {
             match action {
                 Action::Message(message) => {
+                    info!("Consuming message action: {message}");
+
                     let packet = message.as_bytes().to_vec().into_boxed_slice();
                     let peers: Vec<PeerId> = socket.connected_peers().collect();
+
+                    let (name, message) = (socket.id().unwrap().to_string(), message.clone());
+                    HISTORY.with(|state| state.borrow_mut().push((name, message)));
+
                     for peer in peers {
                         socket.send(packet.clone(), peer);
                     }

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "wasm": "wasm-pack build ./matchlib --target web",
-    "server": "cd matchbox_server && cargo run --release",
+    "server": "cd signalserver && cargo run --release",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

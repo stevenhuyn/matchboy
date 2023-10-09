@@ -95,7 +95,7 @@ async fn main() {
         true => [0, 0, 0, 0],
     };
 
-    let port_string = env::var("PORT").unwrap_or_else(|_| String::from("3000"));
+    let port_string = env::var("PORT").unwrap_or_else(|_| String::from("3536"));
     let port = port_string.parse::<u16>().unwrap_or(3000);
     let addr = SocketAddr::from((host, port));
 
