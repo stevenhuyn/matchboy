@@ -59,7 +59,7 @@ pub fn get_history() -> JsValue {
 }
 
 #[wasm_bindgen]
-pub async fn connect() {
+pub async fn connect(url: &str) {
     info!("Connecting to matchbox");
     let url = env::var("SIGNAL_SERVER_URL").unwrap_or("ws://localhost:3536/".to_string());
 
