@@ -1,8 +1,8 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
-import init, { connect, send_message, get_history } from "matchlib";
+import init, { connect, greet } from "matchlib";
 
 const SIGNAL_SERVER_URL = window.location.host.includes("matchboy")
-? new URL("ws://matchchat-production.up.railway.app")
+? new URL("wss://matchchat-production.up.railway.app")
 : new URL("ws://localhost:3536/");
 
 export const LandingPage = () => {
@@ -11,6 +11,7 @@ export const LandingPage = () => {
 
   onMount(async () => {
     init().then((res) => {
+      greet("YO!");
       console.log("INIT");
       console.log(res);
     });
@@ -24,7 +25,7 @@ export const LandingPage = () => {
     if (e.key === "Enter" && chat()) {
       setHistory((prevHistory) => [...prevHistory, chat()]);
       setChat("");
-      send_message(chat());
+      // send_message(chat());
     }
   };
 
@@ -35,16 +36,16 @@ export const LandingPage = () => {
   const handleConnect = () => {
     console.log("Connecting");
 
-    connect(SIGNAL_SERVER_URL.toString());
+    connect();
 
-    setTimeout(() => {
-      setInterval(() => {
-        console.log("Getting history");
-        let h = get_history();
-        console.log(h);
-        setHistory(h);
-      }, 10000);
-    }, 1000);
+    // setTimeout(() => {
+    //   setInterval(() => {
+    //     console.log("Getting history");
+    //     let h = get_history();
+    //     console.log(h);
+    //     setHistory(h);
+    //   }, 10000);
+    // }, 1000);
   };
   return (
     <>
