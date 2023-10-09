@@ -6,5 +6,5 @@ export default defineConfig({
   build: {
     minify: false
   },
-  plugins: [solid(), wasmPack(['./matchlib'])],
+  plugins: [solid(), wasmPack('./matchlib')],
 })

@@ -6,8 +6,8 @@
   "scripts": {
     "wasm": "wasm-pack build ./matchlib --target web",
     "server": "cd matchbox_server && cargo run --release",
-    "dev": "npm run wasm && vite",
-    "build": "npm run wasm && tsc && vite build",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
