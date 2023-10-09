@@ -66,8 +66,8 @@ async fn main() {
 
     info!("Initialising Signal Server");
 
-    let mut state = ServerState::default();
-    let mut request_state = state.clone();
+    let state = ServerState::default();
+    let request_state = state.clone();
 
     let uuid = Uuid::parse_str("c957a42c-ec98-41fd-be84-4cd7f4a584fd").unwrap();
 
@@ -130,7 +130,7 @@ impl SignalingTopology<NoCallbacks, ServerState> for ChatRoomTopology {
             peer_id,
             sender,
             mut receiver,
-            mut state,
+            state,
             ..
         } = upgrade;
 

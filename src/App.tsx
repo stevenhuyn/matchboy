@@ -1,52 +1,18 @@
-import { createSignal, onMount } from "solid-js";
-import solidLogo from "./assets/solid.svg";
-import viteLogo from "/vite.svg";
-import init, { greet, connect, send_message } from "matchlib";
+// import { createSignal, onMount } from "solid-js";
+// import solidLogo from "./assets/solid.svg";
+// import viteLogo from "/vite.svg";
+// import init, { greet, connect, send_message } from "matchlib";
+import { Route, Routes } from "@solidjs/router";
 import "./App.css";
+import { LandingPage } from "./pages/LandingPage";
 
-function App() {
-  const [count, setCount] = createSignal(0);
-
-  onMount(() => {
-    init();
-  });
-
+const App = () => {
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://solidjs.com" target="_blank">
-          <img src={solidLogo} class="logo solid" alt="Solid logo" />
-        </a>
-      </div>
-      <h1>Vite + Solid</h1>
-      <div class="card">
-        <button onClick={() => setCount((count) => count + 1)}>count is {count()}</button>
-
-        <button
-          onClick={() => {
-            greet("world");
-          }}
-        >
-          Click for thing
-        </button>
-        <button onClick={connect}>Connect</button>
-
-        <button
-          onClick={() => {
-            setCount(count() + 1);
-            send_message(`Bruv ${count()}`);
-          }}
-        >Send Bruv</button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p class="read-the-docs">Click on the Vite and Solid logos to learn more</p>
-    </>
+    <Routes>
+      <Route path="/*" component={LandingPage}></Route>
+    </Routes>
   );
-}
+};
+
 
 export default App;
