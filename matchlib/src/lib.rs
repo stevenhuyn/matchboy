@@ -3,12 +3,12 @@ extern crate wasm_bindgen;
 
 mod utils;
 
-use std::time::Duration;
+use std::{time::Duration, cell::RefCell};
 
 use futures::{select, FutureExt};
 use futures_timer::Delay;
 use log::info;
-use matchbox_socket::{WebRtcSocket, PeerState};
+use matchbox_socket::{WebRtcSocket, PeerState, PeerId};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -26,6 +26,20 @@ pub fn init() {
     // Setup logging
     console_error_panic_hook::set_once();
     console_log::init_with_level(log::Level::Debug).unwrap();
+}
+
+
+pub enum Action {
+    Message(String)
+}
+
+thread_local! {
+    pub static STATE: RefCell<Vec<Action>> = RefCell::new(Vec::new());
+}
+
+#[wasm_bindgen]
+pub fn send_message(message: String) {
+    STATE.with(|state| state.borrow_mut().push(Action::Message(message)));
 }
 
 
@@ -60,6 +74,20 @@ pub async fn connect() {
         for (peer, packet) in socket.receive() {
             let message = String::from_utf8_lossy(&packet);
             info!("Message from {peer}: {message:?}");
+        }
+
+        // Handle any messages to send
+        // TODO: Move into the select
+        while let Some(action) = STATE.with(|state| state.borrow_mut().pop()) {
+            match action {
+                Action::Message(message) => {
+                    let packet = message.as_bytes().to_vec().into_boxed_slice();
+                    let peers: Vec<PeerId> = socket.connected_peers().collect();
+                    for peer in peers {
+                        socket.send(packet.clone(), peer);
+                    }
+                }
+            }
         }
 
         select! {

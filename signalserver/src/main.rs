@@ -6,13 +6,15 @@ use std::{
 
 use async_trait::async_trait;
 use axum::{extract::ws::Message, Error};
-use matchbox_protocol::{JsonPeerEvent, PeerId};
+use futures::StreamExt;
+use matchbox_protocol::{JsonPeerEvent, PeerId, PeerRequest};
 use matchbox_signaling::{
-    common_logic::SignalingChannel, NoCallbacks, SignalingServerBuilder, SignalingState,
-    SignalingTopology, WsStateMeta,
+    common_logic::{parse_request, SignalingChannel},
+    ClientRequestError, NoCallbacks, SignalingServerBuilder, SignalingState, SignalingTopology,
+    WsStateMeta,
 };
 use tokio::sync::mpsc::UnboundedSender;
-use tracing::info;
+use tracing::{error, info, warn};
 use tracing_subscriber::prelude::*;
 use uuid::Uuid;
 
@@ -50,8 +52,8 @@ struct Room {
 
 #[derive(Debug, Clone)]
 struct Peer {
-    uuid: PeerId,
-    sender: SignalingChannel,
+    pub uuid: PeerId,
+    pub sender: SignalingChannel,
 }
 
 #[tokio::main]
@@ -129,8 +131,62 @@ impl SignalingTopology<NoCallbacks, ServerState> for ChatRoomTopology {
             }
         }
 
-        let mut rooms = state.rooms.lock().unwrap();
-        let room = rooms.get_mut(&room_id).unwrap();
-        room.peers.push(connecting_peer);
+        {
+            let mut rooms = state.rooms.lock().unwrap();
+            let room = rooms.get_mut(&room_id).unwrap();
+            room.peers.push(connecting_peer.clone());
+        }
+
+        // The state machine for the data channel established for this websocket.
+        while let Some(request) = receiver.next().await {
+            let request = match parse_request(request) {
+                Ok(request) => request,
+                Err(e) => {
+                    match e {
+                        ClientRequestError::Axum(_) => {
+                            // Most likely a ConnectionReset or similar.
+                            warn!("Unrecoverable error with {peer_id:?}: {e:?}");
+                            break;
+                        }
+                        ClientRequestError::Close => {
+                            info!("Connection closed by {peer_id:?}");
+                            break;
+                        }
+                        ClientRequestError::Json(_) | ClientRequestError::UnsupportedType(_) => {
+                            error!("Error with request: {:?}", e);
+                            continue; // Recoverable error
+                        }
+                    };
+                }
+            };
+
+            match request {
+                PeerRequest::Signal { receiver, data } => {
+                    let event = Message::Text(
+                        JsonPeerEvent::Signal {
+                            sender: peer_id,
+                            data,
+                        }
+                        .to_string(),
+                    );
+
+                    {
+                        let mut rooms = state.rooms.lock().unwrap();
+                        let room = rooms.get_mut(&room_id).unwrap();
+                        if let Some(peer) = room.peers.iter().find(|peer| peer.uuid == receiver) {
+                            info!("Receiver {:?}", peer.uuid);
+                            info!("Connecting Peer {:?}", connecting_peer.uuid);
+
+                            let _ = peer.sender.send(Ok(event));
+                        }
+
+                    }
+                }
+                PeerRequest::KeepAlive => {
+                    // Do nothing. KeepAlive packets are used to protect against idle websocket
+                    // connections getting automatically disconnected, common for reverse proxies.
+                }
+            }
+        }
     }
 }

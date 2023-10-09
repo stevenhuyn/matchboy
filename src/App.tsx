@@ -1,15 +1,15 @@
-import { createSignal, onMount } from 'solid-js'
-import solidLogo from './assets/solid.svg'
-import viteLogo from '/vite.svg'
-import init, { greet, connect } from 'matchlib';
-import './App.css'
+import { createSignal, onMount } from "solid-js";
+import solidLogo from "./assets/solid.svg";
+import viteLogo from "/vite.svg";
+import init, { greet, connect, send_message } from "matchlib";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = createSignal(0)
+  const [count, setCount] = createSignal(0);
 
   onMount(() => {
     init();
-  })
+  });
 
   return (
     <>
@@ -23,27 +23,30 @@ function App() {
       </div>
       <h1>Vite + Solid</h1>
       <div class="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count()}
-        </button>
+        <button onClick={() => setCount((count) => count + 1)}>count is {count()}</button>
 
-        <button onClick={() => {
-          greet('world')
-        }}>
+        <button
+          onClick={() => {
+            greet("world");
+          }}
+        >
           Click for thing
         </button>
-        <button onClick={connect}>
-          Connect
-        </button>
+        <button onClick={connect}>Connect</button>
+
+        <button
+          onClick={() => {
+            setCount(count() + 1);
+            send_message(`Bruv ${count()}`);
+          }}
+        >Send Bruv</button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
       </div>
-      <p class="read-the-docs">
-        Click on the Vite and Solid logos to learn more
-      </p>
+      <p class="read-the-docs">Click on the Vite and Solid logos to learn more</p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
