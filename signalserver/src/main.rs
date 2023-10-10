@@ -14,8 +14,9 @@ use futures::StreamExt;
 use matchbox_protocol::{JsonPeerEvent, PeerId, PeerRequest};
 use matchbox_signaling::{
     common_logic::{parse_request, SignalingChannel},
-    ClientRequestError, NoCallbacks, SignalingServerBuilder, SignalingState, SignalingTopology,
-    WsStateMeta,
+    topologies::full_mesh::FullMesh,
+    ClientRequestError, NoCallbacks, SignalingServer, SignalingServerBuilder, SignalingState,
+    SignalingTopology, WsStateMeta,
 };
 use tower_http::cors::CorsLayer;
 use tracing::{error, info, warn};
@@ -99,19 +100,31 @@ async fn main() {
     let port = port_string.parse::<u16>().unwrap_or(3000);
     let addr = SocketAddr::from((host, port));
 
-    let server = SignalingServerBuilder::new(addr, ChatRoomTopology, state)
-        .on_connection_request(move |connection| {
-            // info!("Connection Request {connection:?}");
-            Ok(true)
+    // let server = SignalingServerBuilder::new(addr, ChatRoomTopology, state)
+    //     .on_connection_request(move |connection| {
+    //         // info!("Connection Request {connection:?}");
+    //         Ok(true)
+    //     })
+    //     .on_id_assignment(move |(origin, peer_id)| {
+    //         request_state
+    //             .next
+    //             .lock()
+    //             .unwrap()
+    //             .replace(NextPeer { room_id: uuid });
+    //     })
+    //     .mutate_router(|router| router.layer(cors.clone()))
+    //     .trace()
+    //     .build();
+
+    let server = SignalingServer::full_mesh_builder(addr)
+        .on_connection_request(|connection| {
+            info!("Connecting: {connection:?}");
+            Ok(true) // Allow all connections
         })
-        .on_id_assignment(move |(origin, peer_id)| {
-            request_state
-                .next
-                .lock()
-                .unwrap()
-                .replace(NextPeer { room_id: uuid });
-        })
-        .mutate_router(|router| router.layer(cors.clone()))
+        .on_id_assignment(|(socket, id)| info!("{socket} received {id}"))
+        .on_peer_connected(|id| info!("Joined: {id}"))
+        .on_peer_disconnected(|id| info!("Left: {id}"))
+        .cors()
         .trace()
         .build();
 

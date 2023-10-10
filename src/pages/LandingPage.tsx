@@ -23,8 +23,8 @@ export const LandingPage = () => {
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Enter" && chat()) {
       setHistory((prevHistory) => [...prevHistory, chat()]);
+      send_message(`${chat()}`);
       setChat("");
-      send_message(chat());
     }
   };
 
@@ -39,7 +39,6 @@ export const LandingPage = () => {
 
     setTimeout(() => {
       setInterval(() => {
-        console.log("Getting history");
         let h = get_history();
         setHistory(h);
       }, 1000);

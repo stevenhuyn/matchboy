@@ -3,11 +3,11 @@ extern crate wasm_bindgen;
 
 mod utils;
 
-use std::{cell::RefCell, env, time::Duration};
+use std::{cell::RefCell, time::Duration};
 
-use futures::{future::ErrInto, select, FutureExt};
+use futures::{select, FutureExt};
 use futures_timer::Delay;
-use log::{error, info};
+use log::info;
 use matchbox_socket::{PeerId, PeerState, WebRtcSocket};
 use wasm_bindgen::prelude::*;
 
@@ -47,11 +47,9 @@ pub fn send_message(message: String) {
 pub fn get_history() -> JsValue {
     HISTORY.with(|state| {
         let history = state.borrow();
-        let collected: Vec<String> = history
-            .iter()
-            .map(|message| message.to_string())
-            .collect();
+        let collected: Vec<String> = history.iter().map(|message| message.to_string()).collect();
 
+        // Convert Vec<String> to JsValue
         serde_wasm_bindgen::to_value(&collected).unwrap()
     })
 }
@@ -74,7 +72,10 @@ pub async fn connect(url: &str) {
             match state {
                 PeerState::Connected => {
                     info!("Peer joined: {peer}");
-                    let packet = "hello friend!".as_bytes().to_vec().into_boxed_slice();
+                    let packet = format!("{} has joined", peer.0)
+                        .as_bytes()
+                        .to_vec()
+                        .into_boxed_slice();
                     socket.send(packet, peer);
                 }
                 PeerState::Disconnected => {
@@ -87,7 +88,6 @@ pub async fn connect(url: &str) {
         for (peer, packet) in socket.receive() {
             let message = String::from_utf8_lossy(&packet);
             HISTORY.with(|state| state.borrow_mut().push(message.to_string()));
-            info!("Message from {peer}: {message:?}");
         }
 
         // Handle any messages to send
@@ -99,7 +99,11 @@ pub async fn connect(url: &str) {
 
                     let packet = message.as_bytes().to_vec().into_boxed_slice();
                     let peers: Vec<PeerId> = socket.connected_peers().collect();
-                    HISTORY.with(|state| state.borrow_mut().push(message.clone()));
+                    HISTORY.with(|state| {
+                        state
+                            .borrow_mut()
+                            .push(format!("{} {}", socket.id().unwrap(), message.clone()))
+                    });
 
                     for peer in peers {
                         socket.send(packet.clone(), peer);
