@@ -24,8 +24,6 @@ pub fn greet(name: &str) {
 #[wasm_bindgen(start)]
 pub fn init() {
     // Setup logging
-    info!("HEYYYY");
-    error!("BRUH");
     console_error_panic_hook::set_once();
     console_log::init_with_level(log::Level::Info).unwrap();
 }
@@ -88,6 +86,7 @@ pub async fn connect(url: &str) {
         // Accept any messages incoming
         for (peer, packet) in socket.receive() {
             let message = String::from_utf8_lossy(&packet);
+            HISTORY.with(|state| state.borrow_mut().push((peer.0.to_string(), message.to_string())));
             info!("Message from {peer}: {message:?}");
         }
 
