@@ -6,7 +6,7 @@
   "scripts": {
     "wasm": "wasm-pack build ./matchlib --target web",
     "server": "cd signalserver && cargo run --release",
-    "dev": "npm run wasm && vite",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },

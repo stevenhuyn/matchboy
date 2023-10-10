@@ -11,8 +11,6 @@ use log::{error, info};
 use matchbox_socket::{PeerId, PeerState, WebRtcSocket};
 use wasm_bindgen::prelude::*;
 
-use crate::utils::set_panic_hook;
-
 #[wasm_bindgen]
 extern "C" {
     fn alert(s: &str);
@@ -26,7 +24,8 @@ pub fn greet(name: &str) {
 #[wasm_bindgen(start)]
 pub fn init() {
     // Setup logging
-    set_panic_hook();
+    info!("HEYYYY");
+    error!("BRUH");
     console_error_panic_hook::set_once();
     console_log::init_with_level(log::Level::Info).unwrap();
 }
@@ -70,8 +69,6 @@ pub async fn connect(url: &str) {
 
     let timeout = Delay::new(Duration::from_millis(100));
     futures::pin_mut!(timeout);
-
-    info!("Socket Status: {:?}", socket.id());
 
     loop {
         // Handle any new peers

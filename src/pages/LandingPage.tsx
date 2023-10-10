@@ -2,20 +2,18 @@ import { createSignal, onCleanup, onMount } from "solid-js";
 import init, { connect, send_message, get_history } from "matchlib";
 
 const SIGNAL_SERVER_URL = window.location.host.includes("matchboy")
-  ? new URL("wss://matchchat-production.up.railway.app")
-  : new URL("ws://localhost:3536/");
+? new URL("ws://matchchat-production.up.railway.app")
+: new URL("ws://localhost:3536/");
 
 export const LandingPage = () => {
   const [chat, setChat] = createSignal("");
   const [history, setHistory] = createSignal<string[]>([]);
 
   onMount(async () => {
-    setTimeout(() => {
-      init().then((res) => {
-        console.log("INIT");
-        console.log(res);
-      });
-    }, 3000);
+    init().then((res) => {
+      console.log("INIT");
+      console.log(res);
+    });
   });
 
   const handleInput = (e: Event) => {
@@ -35,13 +33,9 @@ export const LandingPage = () => {
   });
 
   const handleConnect = () => {
-    console.log("Attempt Connect Wasm");
+    console.log("Connecting");
 
-    connect(SIGNAL_SERVER_URL.toString()).then((res) => {
-      console.log("Connected:", res);
-    });
-
-    console.log("Connect WASM done");
+    connect(SIGNAL_SERVER_URL.toString());
 
     setTimeout(() => {
       setInterval(() => {
