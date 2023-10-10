@@ -2,7 +2,7 @@ import { createSignal, onCleanup, onMount } from "solid-js";
 import init, { connect, send_message, get_history } from "matchlib";
 
 const SIGNAL_SERVER_URL = window.location.host.includes("matchboy")
-? new URL("ws://matchchat-production.up.railway.app")
+? new URL("wss://matchchat-production.up.railway.app")
 : new URL("ws://localhost:3536/");
 
 export const LandingPage = () => {
