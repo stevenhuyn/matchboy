@@ -7,8 +7,9 @@ use std::{cell::RefCell, time::Duration};
 
 use futures::{select, FutureExt};
 use futures_timer::Delay;
-use log::info;
-use matchbox_socket::{PeerId, PeerState, WebRtcSocket};
+use log::{info, warn};
+use matchbox_socket::{Packet, PeerId, PeerState, WebRtcSocket};
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -28,19 +29,15 @@ pub fn init() {
     console_log::init_with_level(log::Level::Info).unwrap();
 }
 
-pub enum Action {
-    Message(String),
-}
-
 thread_local! {
-    pub static QUEUE: RefCell<Vec<Action>> = RefCell::new(Vec::new());
+    pub static QUEUE: RefCell<Vec<Message>> = RefCell::new(Vec::new());
     pub static HISTORY: RefCell<Vec<String>> = RefCell::new(Vec::new());
 }
 
 #[wasm_bindgen]
 pub fn send_message(message: String) {
     info!("Sending message: {message}");
-    QUEUE.with(|state| state.borrow_mut().push(Action::Message(message)));
+    QUEUE.with(|state| state.borrow_mut().push(Message::Message(message)));
 }
 
 #[wasm_bindgen]
@@ -52,6 +49,31 @@ pub fn get_history() -> JsValue {
         // Convert Vec<String> to JsValue
         serde_wasm_bindgen::to_value(&collected).unwrap()
     })
+}
+
+#[wasm_bindgen]
+pub fn clear_history() {
+    info!("Clearing History");
+    HISTORY.with(|state| state.borrow_mut().clear());
+}
+
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub enum Message {
+    Join,
+    Leave,
+    Message(String),
+}
+
+impl Message {
+    pub fn to_chat_message(&self, peer_id: PeerId) -> String {
+        let binding = &peer_id.0.to_string();
+        let name = &binding.as_str()[..5];
+        match self {
+            Message::Join => format!("{} joined", name),
+            Message::Leave => format!("{} left", name),
+            Message::Message(message) => format!("{}: {}", name, message),
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -72,10 +94,9 @@ pub async fn connect(url: &str) {
             match state {
                 PeerState::Connected => {
                     info!("Peer joined: {peer}");
-                    let packet = format!("{} has joined", peer.0)
-                        .as_bytes()
-                        .to_vec()
-                        .into_boxed_slice();
+
+                    let bin_message = bincode::serialize(&Message::Join).unwrap();
+                    let packet: Packet = bin_message.into_boxed_slice();
                     socket.send(packet, peer);
                 }
                 PeerState::Disconnected => {
@@ -86,29 +107,36 @@ pub async fn connect(url: &str) {
 
         // Accept any messages incoming
         for (peer, packet) in socket.receive() {
-            let message = String::from_utf8_lossy(&packet);
-            HISTORY.with(|state| state.borrow_mut().push(message.to_string()));
+            if let Ok(message) = bincode::deserialize::<Message>(&packet) {
+                let chat_message = message.to_chat_message(peer);
+                HISTORY.with(|state| state.borrow_mut().push(chat_message));
+            }
         }
 
         // Handle any messages to send
         // TODO: Move into the select
-        while let Some(action) = QUEUE.with(|state| state.borrow_mut().pop()) {
-            match action {
-                Action::Message(message) => {
-                    info!("Consuming message action: {message}");
-
-                    let packet = message.as_bytes().to_vec().into_boxed_slice();
-                    let peers: Vec<PeerId> = socket.connected_peers().collect();
-                    HISTORY.with(|state| {
-                        state
-                            .borrow_mut()
-                            .push(format!("{} {}", socket.id().unwrap(), message.clone()))
-                    });
-
-                    for peer in peers {
-                        socket.send(packet.clone(), peer);
-                    }
+        while let Some(message) = QUEUE.with(|state| state.borrow_mut().pop()) {
+            match message {
+                Message::Message(ref chat) => {
+                    info!("Consuming message action: Message({})", &chat);
                 }
+                _ => {
+                    warn!("Not valid manual user action");
+                    continue;
+                }
+            }
+
+            let bin_message = bincode::serialize(&message).unwrap();
+            let packet: Packet = bin_message.into_boxed_slice();
+
+            let peers: Vec<PeerId> = socket.connected_peers().collect();
+            let chat_message = message.to_chat_message(socket.id().unwrap());
+
+            info!("Adding message: {chat_message}");
+            HISTORY.with(|state| state.borrow_mut().push(chat_message));
+
+            for peer in peers {
+                socket.send(packet.clone(), peer);
             }
         }
 

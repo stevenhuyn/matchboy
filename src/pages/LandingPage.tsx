@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
-import init, { connect, send_message, get_history } from "matchlib";
+import init, { connect, send_message, get_history, clear_history } from "matchlib";
 
 const SIGNAL_SERVER_URL = window.location.host.includes("matchboy")
 ? new URL("wss://matchchat-production.up.railway.app")
@@ -10,9 +10,16 @@ export const LandingPage = () => {
   const [history, setHistory] = createSignal<string[]>([]);
 
   onMount(async () => {
-    init().then((res) => {
-      console.log("INIT");
-      console.log(res);
+    init().then(() => {
+      clear_history();
+      connect(SIGNAL_SERVER_URL.toString());
+
+      setTimeout(() => {
+        setInterval(() => {
+          let h = get_history();
+          setHistory(h);
+        }, 1000);
+      }, 1000);
     });
   });
 
@@ -22,28 +29,16 @@ export const LandingPage = () => {
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Enter" && chat()) {
-      setHistory((prevHistory) => [...prevHistory, chat()]);
       send_message(`${chat()}`);
+      setHistory(get_history());
       setChat("");
     }
   };
 
   onCleanup(() => {
-    // cleanup if needed, e.g. clear intervals, listeners, etc.
+    clear_history();
   });
 
-  const handleConnect = () => {
-    console.log("Connecting");
-
-    connect(SIGNAL_SERVER_URL.toString());
-
-    setTimeout(() => {
-      setInterval(() => {
-        let h = get_history();
-        setHistory(h);
-      }, 1000);
-    }, 1000);
-  };
   return (
     <>
       <h1 class="font-light text-4xl m-6">Match Boy</h1>
@@ -56,9 +51,6 @@ export const LandingPage = () => {
         onInput={handleInput}
         onKeyDown={handleKeyDown}
       />
-      <button class="btn" onClick={handleConnect}>
-        Connect
-      </button>
       <div>
         {history().map((item) => (
           <div>{item}</div>
