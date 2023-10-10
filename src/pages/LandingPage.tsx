@@ -41,9 +41,8 @@ export const LandingPage = () => {
       setInterval(() => {
         console.log("Getting history");
         let h = get_history();
-        console.log(h);
         setHistory(h);
-      }, 10000);
+      }, 1000);
     }, 1000);
   };
   return (
