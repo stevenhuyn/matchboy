@@ -100,7 +100,8 @@ pub async fn connect(url: &str) {
                     socket.send(packet, peer);
                 }
                 PeerState::Disconnected => {
-                    info!("Peer left: {peer}");
+                    let chat_message = Message::Leave.to_chat_message(peer);
+                    HISTORY.with(|state| state.borrow_mut().push(chat_message));
                 }
             }
         }
@@ -128,13 +129,14 @@ pub async fn connect(url: &str) {
 
             let bin_message = bincode::serialize(&message).unwrap();
             let packet: Packet = bin_message.into_boxed_slice();
-
-            let peers: Vec<PeerId> = socket.connected_peers().collect();
             let chat_message = message.to_chat_message(socket.id().unwrap());
 
             info!("Adding message: {chat_message}");
             HISTORY.with(|state| state.borrow_mut().push(chat_message));
 
+            socket.update_peers();
+            let peers: Vec<PeerId> = socket.connected_peers().collect();
+            
             for peer in peers {
                 socket.send(packet.clone(), peer);
             }
