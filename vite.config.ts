@@ -7,10 +7,12 @@ export default defineConfig({
     minify: false
   },
   server: {
+    // https://github.com/vitejs/vite/issues/14565
     host: "127.0.0.2",
     open: true,
   },
   preview: {
+    // https://github.com/vitejs/vite/issues/14565
     host: "127.0.0.2",
     open: true,
   },
