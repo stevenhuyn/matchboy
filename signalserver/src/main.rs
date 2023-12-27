@@ -69,7 +69,6 @@ async fn main() {
     info!("Initialising Signal Server");
 
     let state = ServerState::default();
-    let request_state = state.clone();
 
     let uuid = Uuid::parse_str("c957a42c-ec98-41fd-be84-4cd7f4a584fd").unwrap();
 
@@ -83,8 +82,8 @@ async fn main() {
     tracing::debug!("railway_env: {:?}", railway_env);
     let railway_env = railway_env.is_ok();
     let origins = match railway_env {
-        false => ["https://localhost:5173".parse().unwrap()],
-        true => ["https://matchboy.onrender.com".parse().unwrap()],
+        false => vec!["https://localhost:5173".parse().unwrap()],
+        true => vec!["https://matchboy.stevenhuyn.com".parse().unwrap()],
     };
 
     let cors = CorsLayer::new()
