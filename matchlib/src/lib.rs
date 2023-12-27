@@ -8,7 +8,7 @@ use std::{cell::RefCell, time::Duration};
 use futures::{select, FutureExt};
 use futures_timer::Delay;
 use log::{info, warn};
-use matchbox_socket::{Packet, PeerId, PeerState, WebRtcSocket};
+use matchbox_socket::{Packet, PeerId, PeerState, RtcIceServerConfig, WebRtcSocket};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
@@ -80,7 +80,16 @@ impl Message {
 pub async fn connect(url: &str) {
     info!("Connecting to matchbox");
 
-    let (mut socket, loop_fut) = WebRtcSocket::new_reliable(url);
+    let ice_server = RtcIceServerConfig {
+        urls: vec!["stun:stun.l.google.com:19302".to_string()],
+        username: None,
+        credential: None,
+    };
+
+    let (mut socket, loop_fut) = WebRtcSocket::builder(url)
+        .ice_server(ice_server)
+        .add_reliable_channel()
+        .build();
 
     let loop_fut = loop_fut.fuse();
     futures::pin_mut!(loop_fut);
@@ -136,7 +145,7 @@ pub async fn connect(url: &str) {
 
             socket.update_peers();
             let peers: Vec<PeerId> = socket.connected_peers().collect();
-            
+
             for peer in peers {
                 socket.send(packet.clone(), peer);
             }
