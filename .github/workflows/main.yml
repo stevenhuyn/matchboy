@@ -24,7 +24,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: wasm-pack
         run: |
-          cd cubeway
+          cd matchlib
           wasm-pack build --target web
 
       - name: Install and Build
