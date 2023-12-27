@@ -527,9 +527,9 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "matchbox_protocol"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b366d07aaa4f4badff98d54f6b9d928ee821fa486ee9e8f6929c7d411791e36b"
+checksum = "a08a1627b52e1a4053d330511747d8385692d780a59b75df078be3dcdd06eb85"
 dependencies = [
  "cfg-if",
  "derive_more",
@@ -540,13 +540,12 @@ dependencies = [
 
 [[package]]
 name = "matchbox_signaling"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d6a6ae769358b9552e20660e01d7d0b238a11b03a41d2b4451e3b46cb0baaeb"
+checksum = "c31c6f89bf78e15b636ce2261bcd2cbb69c23ac2f07aa41310f14721aa73b0b5"
 dependencies = [
  "async-trait",
  "axum",
- "clap",
  "futures",
  "hyper",
  "matchbox_protocol",
@@ -557,7 +556,6 @@ dependencies = [
  "tokio-stream",
  "tower-http",
  "tracing",
- "tracing-subscriber",
  "uuid",
 ]
 
@@ -587,6 +585,16 @@ name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
+
+[[package]]
+name = "mime_guess"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4192263c238a5f0d0c6bfd21f336a313a4ce1c450542449ca191bb657b4642ef"
+dependencies = [
+ "mime",
+ "unicase",
+]
 
 [[package]]
 name = "miniz_oxide"
@@ -1078,6 +1086,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-util"
+version = "0.7.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5419f34732d9eb6ee4c3578b7989078579b7f039cbbb9ca2c4da015749371e15"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "futures-sink",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "tower"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1106,7 +1127,13 @@ dependencies = [
  "http",
  "http-body",
  "http-range-header",
+ "httpdate",
+ "mime",
+ "mime_guess",
+ "percent-encoding",
  "pin-project-lite",
+ "tokio",
+ "tokio-util",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -1217,6 +1244,15 @@ name = "typenum"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
+
+[[package]]
+name = "unicase"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7d2d4dafb69621809a81864c9c1b864479e1235c0dd4e199924b9742439ed89"
+dependencies = [
+ "version_check",
+]
 
 [[package]]
 name = "unicode-bidi"

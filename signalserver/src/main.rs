@@ -5,22 +5,11 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use async_trait::async_trait;
-use axum::{
-    extract::ws::Message,
-    http::{header::CONTENT_TYPE, Method},
-};
-use futures::StreamExt;
-use matchbox_protocol::{JsonPeerEvent, PeerId, PeerRequest};
-use matchbox_signaling::{
-    common_logic::{parse_request, SignalingChannel},
-    topologies::full_mesh::FullMesh,
-    ClientRequestError, NoCallbacks, SignalingServer, SignalingServerBuilder, SignalingState,
-    SignalingTopology, WsStateMeta,
-};
-use tokio::sync::mpsc::unbounded_channel;
+use axum::http::{header::CONTENT_TYPE, Method};
+use matchbox_protocol::PeerId;
+use matchbox_signaling::{common_logic::SignalingChannel, SignalingServer, SignalingState};
 use tower_http::cors::CorsLayer;
-use tracing::{error, info, warn};
+use tracing::info;
 use tracing_subscriber::prelude::*;
 use uuid::Uuid;
 
